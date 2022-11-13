@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 notify = "4.0.13"
+image = "0.24.5"
+turbojpeg = {version = "0.5.2", features = ["image"]}
