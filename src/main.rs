@@ -1,17 +1,17 @@
 use image::io::Reader as ImageReader;
 // use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
-use image::{ImageBuffer, Rgb, DynamicImage, GenericImage};
-use turbojpeg::OwnedBuf;
+use image::{ImageBuffer, Rgb};
 use std::fs::{self};
 use std::io::{Error, ErrorKind};
 use std::path::Path;
+use turbojpeg::{OwnedBuf};
 
 type CompFn = dyn Fn(&ImageBuffer<Rgb<u8>, Vec<u8>>) -> Result<OwnedBuf, Error>;
 
 fn compress(data: &ImageBuffer<Rgb<u8>, Vec<u8>>, qty: i32) -> Result<OwnedBuf, Error> {
     Ok(
         turbojpeg::compress_image(data, qty, turbojpeg::Subsamp::Sub2x2)
-            .map_err(|err| -> Error { Error::new(ErrorKind::InvalidData, err) })?
+            .map_err(|err| -> Error { Error::new(ErrorKind::InvalidData, err) })?,
     )
 }
 
@@ -35,19 +35,17 @@ impl Compressor {
     fn comp_image(&self, src_abs_path: &Path, dst_abs_path: &Path) -> Result<(), Error> {
         let img = ImageReader::open(src_abs_path)?
             .decode()
-            .map_err(|err| -> Error { Error::new(ErrorKind::InvalidData, err) })?.into_rgb8();
-        let width = img.width();
-        let height = img.height();
-        let vec = img.to_vec();
+            .map_err(|err| -> Error { Error::new(ErrorKind::InvalidData, err) })?
+            .into_rgb8();
         let comp = (self.comp_fn)(&img)
             .map_err(|err| -> Error { Error::new(ErrorKind::InvalidData, err) })?;
-        println!("{} {}", vec.len(), comp.len());
-        println!("{}", (width as f64)/(height as f64));
-        std::fs::write(dst_abs_path, comp)?;
+
+        fs::write(dst_abs_path, comp)?;
+        println!("{}", src_abs_path.to_str().unwrap());
         Ok(())
     }
 
-    fn comp_dir(&self, src_abs_path: &Path, dst_abs_path: &Path) -> Result<(), Error> {
+    fn comp_dir(& mut self, src_abs_path: &Path, dst_abs_path: &Path) -> Result<(), Error> {
         if !src_abs_path.is_dir() {
             return Err(Error::from(ErrorKind::InvalidData));
         }
@@ -76,8 +74,8 @@ impl Compressor {
 }
 
 fn main() {
-    // Compressor::new(comp_fn_factory(1)).comp_image(Path::new("./images/20210813_112050.jpg"), Path::new("./compressed/20210813_112050.jpg"));
-    Compressor::new(comp_fn_factory(1))
+    Compressor::new(comp_fn_factory(10))
         .comp_dir(Path::new("./images"), Path::new("./compressed"))
         .unwrap();
+    
 }
