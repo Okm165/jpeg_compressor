@@ -1,0 +1,6 @@
+services:
+  compressor:
+    container_name: compressor
+    build: 
+      context: ./
+    command: cargo run --release
