@@ -1,5 +1,4 @@
-from rust
-
+FROM rust
 WORKDIR /app
 RUN apt-get update && apt-get install -y imagemagick
 COPY src/ src/
